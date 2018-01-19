@@ -1,0 +1,24 @@
+CC = tcc
+CFLAGS = -O -G
+
+all: rascpy.exe
+
+clean:
+	-del *.obj
+	-if exist rascpy.exe del rascpy.exe
+	-if exist aspidost.exe del aspidost.exe
+
+aspidos.obj: aspidos.c aspi_d16.h
+	$(CC) $(CFLAGS) -c -oaspidos.obj aspidos.c
+
+aspidost.obj: aspidos.c aspi_d16.h
+	$(CC) $(CFLAGS) -DTEST -c -oaspidost.obj aspidos.c
+
+aspidost.exe: aspidost.obj
+	$(CC) $(CFLAGS) $(LDFLAGS) aspidost.obj
+
+rasdrv.obj: rasdrv.c rasdrv.h aspi_d16.h aspidos.obj
+	$(CC) $(CFLAGS) -c -orasdrv.obj rasdrv.c
+
+rascpy.exe: rascpy.c rasdrv.obj rasdrv.h aspi_d16.h aspidos.obj
+	$(CC) $(CFLAGS) $(LDFLAGS) rascpy.c rasdrv.obj aspidos.obj

@@ -1,0 +1,30 @@
+# makefile for (Open)Watcom
+#
+# wmake -f makefile.wc
+
+CC = wcl
+CFLAGS = -zq -s -os -fr
+LDFLAGS = 
+LIBS = 
+RM_F = rm
+
+all: rascpy.exe
+
+clean: .SYMBOLIC
+	-$(RM_F) rasdrv.obj rascpy.obj aspidos.obj aspidost.obj
+	-$(RM_F) rascpy.exe aspidost.exe
+
+aspidos.obj: aspidos.c aspi_d16.h
+	$(CC) $(CFLAGS) -c -Fo=aspidos.obj aspidos.c
+
+aspidost.obj: aspidos.c aspi_d16.h
+	$(CC) $(CFLAGS) -DTEST -c -Fo=aspidost.obj aspidos.c
+
+aspidost.exe: aspidost.obj
+	$(CC) $(CFLAGS) $(LDFLAGS) aspidost.obj
+
+rasdrv.obj: rasdrv.c rasdrv.h aspi_d16.h aspidos.obj
+	$(CC) $(CFLAGS) -c -Fo=rasdrv.obj rasdrv.c
+
+rascpy.exe: rascpy.c rasdrv.obj rasdrv.h aspi_d16.h aspidos.obj
+	$(CC) $(CFLAGS) $(LDFLAGS) rascpy.c rasdrv.obj aspidos.obj $(LIBS)
