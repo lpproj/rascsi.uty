@@ -435,6 +435,18 @@ ask_file_overwrite(const char *filename, int the_all)
 -----------------------------------------
 */
 
+static size_t  get_buflen(void)
+{
+    size_t n = rasdrv_tfr_buflen & (~0x1ffU);
+    if (n > 16384) n = 16384;
+    if (n == 0) {
+        fprintf(stderr, "fatal: need rasdrv_mem_init()\n");
+        exit(1);
+    }
+    return n;
+}
+
+
 int
 copyfile_from_rasdrv(const char *rasfile, const char *destfilename)
 {
@@ -459,7 +471,7 @@ copyfile_from_rasdrv(const char *rasfile, const char *destfilename)
 		while (filelen > 0)
 		{
 			char *b = rasdrv_tfr_buf;
-			size_t bufsiz = 512;
+			size_t bufsiz = get_buflen();
 			unsigned rcnt, wcnt;
 			
 			rcnt = (filelen > bufsiz) ? bufsiz : (unsigned)filelen;
@@ -524,7 +536,7 @@ copyfile_to_rasdrv(const char *srcpathname, const char *rasfile)
 	
 	while(err_in_copying == 0) {
 		char *b = rasdrv_tfr_buf;
-		size_t bufsiz = 512;
+		size_t bufsiz = get_buflen();
 		unsigned rcnt, wcnt;
 		
 		wcnt = rcnt = mydos_rw(&dh, 0, b, bufsiz);

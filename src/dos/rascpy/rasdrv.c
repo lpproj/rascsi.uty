@@ -61,7 +61,11 @@ static unsigned char rasdrv_dev_lun = 0;
 struct rasdrv_memblk {
 	rasdrv_t  sc_rasdrv;
 	char  rasdrv_pkt_buf[512];
+#if 1
+	char  rasdrv_tfr_buf[8192];
+#else
 	char  rasdrv_tfr_buf[2352];
+#endif
 };
 
 rasdrv_t *h_rasdrv;
