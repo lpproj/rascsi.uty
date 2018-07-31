@@ -79,3 +79,14 @@ LSI-C86 3.30c試食版、Turbo C++ 1.01、OpenWatcom 1.9でコンパイルできる
 http://unlicense.org/
 https://ja.wikipedia.org/wiki/Unlicense
 
+
+履歴
+----
+
+2018-07-31
+    高速化のため転送バッファサイズ増加(512->8192bytes)
+
+2018-01-19
+    初版
+
+
