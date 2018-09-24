@@ -888,6 +888,11 @@ my_getopt(int argc, char *argv[])
 						case 'F': case 'Y':
 							cmd_opt &= ~(unsigned)COPY_FLAG_PROMPT;
 							break;
+#if 0
+						default:
+							iserr = -1;
+							break;
+#endif
 					}
 					++s;
 				}
@@ -896,8 +901,6 @@ my_getopt(int argc, char *argv[])
 				cmd_arg = argv;
 				break;
 			}
-			
-			iserr = -1;
 		}
 		
 		++argv;

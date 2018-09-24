@@ -83,6 +83,9 @@ https://ja.wikipedia.org/wiki/Unlicense
 履歴
 ----
 
+2018-09-24
+    get/putコマンドで -f オプションが使えなかった件を修正
+
 2018-07-31
     高速化のため転送バッファサイズ増加(512->8192bytes)
 
