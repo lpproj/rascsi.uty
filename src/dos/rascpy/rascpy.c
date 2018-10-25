@@ -589,7 +589,7 @@ static
 int
 disp_dirent1(FILE *fo, h68_files_t *f, unsigned flags)
 {
-	int do_show = 0;
+	int do_count = 0;
 	struct tm tm;
 	
 	h68files_to_tm(&tm, f);
@@ -610,11 +610,13 @@ disp_dirent1(FILE *fo, h68_files_t *f, unsigned flags)
 				fprintf(fo, "%02d/%02d/%04d  %02d:%02d %s", tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_hour % 12, tm.tm_min, (tm.tm_hour / 12) ? "pm" : "am");
 				break;
 		}
-		if (f->attr & AT_DIRECTORY)
+		if (f->attr & AT_DIRECTORY) {
 			fprintf(fo, "    <DIR>   ");
-		else
+			do_count = (flags & DISP_FLAG_ALL) != 0;
+		} else {
 			fprintf(fo, " %11lu", peekBE32(&(f->size)));
-		
+			do_count = 1;
+		}
 		fprintf(fo, " %s\n", f->full);
 	} else {
 		if ((flags & DISP_FLAG_LONG)) {
@@ -644,10 +646,10 @@ disp_dirent1(FILE *fo, h68_files_t *f, unsigned flags)
 		} else {
 			fprintf(fo, "%s\n", f->full);
 		}
-		do_show = 1;
+		do_count = 1;
 	}
 	
-	return do_show;
+	return do_count;
 }
 
 
@@ -678,7 +680,6 @@ disp_dir(FILE *fo, const char *path, const char *match_name, unsigned flags)
 	rc = rasdrvFsFiles(h_rasdrv, rasdrv_unit, (unsigned)hf, &n, f);
 	
 	while(!RASDRV_ISERROR(rc)) {
-		++filecnt;
 		filecnt += disp_dirent1(fo, f, flags);
 		rc = rasdrvFsNfiles(h_rasdrv, rasdrv_unit, (unsigned)hf, f);
 	}
@@ -850,6 +851,9 @@ my_getopt(int argc, char *argv[])
 				}
 				else if (strcmp(cmd, "dir") == 0) {
 					cmd_opt |= DISP_FLAG_DOSISH | DISP_FLAG_LONG;
+				}
+				else if (strcmp(cmd, "ls") == 0) {
+					cmd_opt &= ~(unsigned)(DISP_FLAG_DOSISH);
 				}
 				else if (strcmp(cmd, "get") == 0 || strcmp(cmd, "put") == 0) {
 					cmd_opt |= COPY_FLAG_PROMPT;
