@@ -1,0 +1,55 @@
+!ifndef D
+!ifdef __UNIX__
+D=/
+!else
+D=\ # 
+!endif
+O=obj
+X=.exe
+CP=cp
+RM_F=rm -f
+!endif
+
+!ifndef BASEDIR
+BASEDIR=$(%cwd)
+!endif
+
+TPDIR=$(BASEDIR)$(D)..$(D)3rdparty$(D)
+
+!ifndef MTCPDIR
+MTCPDIR=$(TPDIR)mTCP-src_2013-05-23
+MTCPINC=$(MTCPDIR)$(D)TCPINC
+MTCPLIBSRC=$(MTCPDIR)$(D)TCPLIB
+!endif
+
+!ifndef MTCPCFG
+MTCPCFG="libmtcp.cfg"
+!endif
+
+!ifndef MMODEL_DOS16
+MMODEL_DOS16=l
+!endif
+!ifndef MMODEL_MTCP
+MMODEL_MTCP=$(MMODEL_DOS16)
+!endif
+!ifndef MMODEL_TEEN
+MMODEL_TEEN=$(MMODEL_DOS16)
+!endif
+
+LIBMTCP=mtcp_$(MMODEL_MTCP).lib
+
+
+!ifndef LIBTEENDIR
+LIBTEENDIR=$(TPDIR)teenlib
+!endif
+
+LIBTEENINC=$(LIBTEENDIR)$(D)include
+LIBTEENPREFIX=$(LIBTEENDIR)$(D)lib$(D)
+!ifeq MMODEL_TEEN s
+LIBTEEN=teen.lib
+MMODEL_TEEN_FLAGS=-ms
+!else
+LIBTEEN=teen_$(MMODEL_TEEN).lib
+MMODEL_TEEN_FLAGS=-m$(MMODEL_TEEN) -dFAR=far
+!endif
+

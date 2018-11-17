@@ -1,0 +1,84 @@
+# Makefile for (Open)Watcom
+# wmake -h -f Makefile.wc
+#
+# important options for watcom
+#
+# -zp1  pack struct/union by byte (#pragma pack(1))
+# -ecc  calling conversion "cdecl"
+# -s    disable stack check
+
+
+.ERASE
+
+!include basedef.wc
+
+#LIBTEENDIR=..$(D)3rdparty$(D)teenlib
+#MMODEL_TEEN=-m$(MMODEL_DOS16)
+#LIBTEEN=teen_$(MMODEL_DOS16).lib
+
+CC16=wcl
+CXX16=wcl
+CFLAGS=-zq -s
+
+CFLAGS_TEEN=$(CFLAGS) -bt=dos -DDOS -os -ecc -wcd=138 -zp1 -DTEEN $(MMODEL_TEEN_FLAGS) -I$(LIBTEENINC) -I.
+LIBS_TEEN=$(LIBTEENPREFIX)$(LIBTEEN)
+
+ASFLAGS_MTCP=-zq $(MMODEL_MTCP) -DDOS_GENERIC
+CFLAGS_MTCP=$(CFLAGS) -bt=dos -DDOS -os -zp2 -DMTCP -m$(MMODEL_MTCP) -DCFG_H=$(MTCPCFG) -DDOS_GENERIC -I$(MTCPINC) -I.
+
+CFLAGS_SWRAP_DOS16=$(CFLAGS) -os -DDOS -DMTCP -DTEEN -m$(MMODEL_DOS16) -I.
+
+
+CC32=wcl386
+CXX32=wcl386
+CFLAGS_WIN32=$(CFLAGS) -bt=nt -I. -DUSE_WINSOCK1
+LIBS_WIN32=wsock32.lib
+
+all: swrap.lib
+
+echocli: echocli.exe echocliw.exe
+
+clean: .SYMBOLIC
+	-$(RM_F) swrap.lib swrap.rsp echocli.exe echocliw.exe
+	-rm *.$(O)
+	-rm *.err
+
+
+
+echocli.exe: echocli.$(O) swrap.lib
+	$(CC16) $(CFLAGS_SWRAP_DOS16) -fe=$@ $< $(LIBS_TEEN) $(LIBMTCP)
+
+echocli.$(O): echocli.c swrap.h
+	$(CC16) -c $(CFLAGS_SWRAP_DOS16) -fo=$@ $[@
+
+
+swrap.lib: swrap.rsp
+	wlib -c -n -q $@ @$[@
+
+swrap.rsp: sw_mtcp.$(O) sw_teen.$(O) swrapd16.$(O) sw_ws.$(O) swrapw32.$(O)
+	$(RM_F) $@
+	for %i in ($<) do echo +-%i >> $@
+
+
+swrapd16.$(O): swrap.c swrap.h
+	$(CC16) -c $(CFLAGS_SWRAP_DOS16) -fo=$@ $[@
+
+sw_teen.$(O): sw_teen.c sw_teen.h swrap.h
+	$(CC16) -c $(CFLAGS_TEEN) -fo=$@ $[@
+
+sw_mtcp.$(O): sw_mtcp.cpp sw_mtcp.h swrap.h
+	$(CC16) -c $(CFLAGS_MTCP) -fo=$@ $[@
+
+
+echocliw.exe: echocliw.$(O) sw_ws.$(O) swrapw32.$(O)
+	$(CC32) $(CFLAGS_WIN32) -fe=$@ $< $(LIBS_WIN32)
+
+echocliw.$(O): echocli.c swrap.h
+	$(CC32) -c $(CFLAGS_WIN32) -fo=$@ $[@
+
+sw_ws.$(O): sw_ws.c sw_wsock.h swrap.h
+	$(CC32) -c $(CFLAGS_WIN32) -fo=$@ $[@
+
+swrapw32.$(O): swrap.c swrap.h
+	$(CC32) -c $(CFLAGS_WIN32) -fo=$@ $[@
+

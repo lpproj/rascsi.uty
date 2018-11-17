@@ -1,0 +1,640 @@
+--- a/APPS/DHCP/DHCP.CFG
++++ b/APPS/DHCP/DHCP.CFG
+@@ -105,4 +105,7 @@
+ #endif
+ 
+ 
++// Platform define(s)
++#define DOS_GENERIC
++
+ #endif
+diff --git a/APPS/DHCP/DHCP.CPP b/APPS/DHCP/DHCP.CPP
+index 680026d..6805191 100755
+--- a/APPS/DHCP/DHCP.CPP
++++ b/APPS/DHCP/DHCP.CPP
+@@ -127,11 +127,16 @@ void __interrupt __far ctrlBreakHandler( ) {
+   CtrlBreakDetected = 1;
+ }
+ 
++unsigned CtrlBreakVect = 0; /* 0x1b on IBMPC, 0x06 on NEC PC-98 */
+ 
+ 
+ 
+ static char CopyrightMsg1[] = "mTCP DHCP Client by M Brutman (mbbrutman@gmail.com) (C)opyright 2008-2013\n";
+-static char CopyrightMsg2[] = "Version: " __DATE__ "\n\n";
++static char CopyrightMsg2[] = "Version: " __DATE__
++#if defined( DOS_GENERIC )
++                                " (DOS generic)"
++#endif
++                                "\n\n";
+ 
+ 
+ 
+@@ -148,6 +153,10 @@ int main( int argc, char *argv[] ) {
+     exit(1);
+   }
+ 
++#if !defined( DOS_GENERIC )
++  CtrlBreakVect = 0x1b;
++#endif
++
+ 
+ 
+   MyIpAddr[0] = MyIpAddr[1] = MyIpAddr[2] = MyIpAddr[3] = 0;
+@@ -167,8 +176,10 @@ int main( int argc, char *argv[] ) {
+   // same routine, but don't worry about restoring it - DOS will do that
+   // for us.
+ 
+-  oldCtrlBreakHandler = getvect( 0x1b );
+-  setvect( 0x1b, ctrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    oldCtrlBreakHandler = getvect( CtrlBreakVect );
++    setvect( CtrlBreakVect, ctrlBreakHandler);
++  }
+   setvect( 0x23, ctrlBreakHandler);
+ 
+ 
+@@ -334,7 +345,9 @@ DhcpStatus_t makeAttempt( int i ) {
+ 
+ void shutdown( int rc ) {
+ 
+-  setvect( 0x1b, oldCtrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    setvect( CtrlBreakVect, oldCtrlBreakHandler);
++  }
+ 
+   Utils::endStack( );
+ 
+diff --git a/APPS/DHCP/MAKEFILE b/APPS/DHCP/MAKEFILE
+index 7142289..6503efa 100755
+--- a/APPS/DHCP/MAKEFILE
++++ b/APPS/DHCP/MAKEFILE
+@@ -21,6 +21,7 @@
+ # -zpw  Use with above; make sure you are warning free!
+ # -0    8088/8086 class code generation
+ # -s    disable stack overflow checking
++# -zq   quiet mode
+ 
+ # For this code performance is not an issue.  Make it small.
+ 
+@@ -29,7 +30,7 @@ tcp_c_dir = ..\..\TCPLIB\
+ common_h_dir = ..\..\INCLUDE
+ 
+ memory_model = -mc
+-compile_options = -0 $(memory_model) -DCFG_H="dhcp.cfg" -oh -ok -os -s -oa -ei -zp2 -zpw -we
++compile_options = -0 $(memory_model) -DCFG_H="dhcp.cfg" -oh -ok -os -s -oa -ei -zp2 -zpw -we -zq
+ compile_options += -i=$(tcp_h_dir) -i=$(common_h_dir)
+ 
+ tcpobjs = packet.obj arp.obj eth.obj ip.obj udp.obj utils.obj timer.obj ipasm.obj
+@@ -50,10 +51,10 @@ patch : .symbolic
+ .cpp : $(tcp_c_dir)
+ 
+ .asm.obj :
+-  wasm -0 $(memory_model) $[*
++  wasm -zq -0 $(memory_model) $[*
+ 
+ .cpp.obj :
+   wpp $[* $(compile_options)
+ 
+ dhcp.exe : $(tcpobjs) $(objs)
+-  wlink system dos option map option stack=4096 name $@ file *.obj
++  wlink system dos option quiet option map option stack=4096 name $@ file *.obj
+diff --git a/APPS/DNSTEST/DNS.CFG b/APPS/DNSTEST/DNS.CFG
+index c6f48ea..4aa34fd 100755
+--- a/APPS/DNSTEST/DNS.CFG
++++ b/APPS/DNSTEST/DNS.CFG
+@@ -122,6 +122,10 @@ extern unsigned long DNSTimeout;
+ #endif
+ 
+ 
++// Platform define(s)
++#define DOS_GENERIC
++
++
+ 
+ 
+ #endif
+diff --git a/APPS/DNSTEST/DNSTEST.CPP b/APPS/DNSTEST/DNSTEST.CPP
+index b5f3c75..0c7b130 100755
+--- a/APPS/DNSTEST/DNSTEST.CPP
++++ b/APPS/DNSTEST/DNSTEST.CPP
+@@ -83,6 +83,8 @@ void __interrupt __far ctrlBreakHandler( ) {
+ }
+ #endif
+ 
++unsigned CtrlBreakVect = 0; /* 0x1b on IBMPC, 0x06 on NEC PC-98 */
++
+ 
+ 
+ 
+@@ -105,7 +107,11 @@ char *DnsErrors[] = {
+ 
+ 
+ static char CopyrightMsg1[] = "mTCP DNSTest by M Brutman (mbbrutman@gmail.com) (C)opyright 2009-2013\n";
+-static char CopyrightMsg2[] = "Version: " __DATE__ "\n\n";
++static char CopyrightMsg2[] = "Version: " __DATE__
++#if defined( DOS_GENERIC )
++                                " (DOS generic)"
++#endif
++                                "\n\n";
+ 
+ 
+ 
+@@ -122,6 +128,10 @@ int main( int argc, char *argv[] ) {
+     exit(-1);
+   }
+ 
++#if !defined( DOS_GENERIC )
++  CtrlBreakVect = 0x1b;
++#endif
++
+   // No TCP sockets and no TCP Xmit buffers
+   if ( Utils::initStack( 0, 0 ) ) {
+     fprintf( stderr, "\nFailed to initialize TCP/IP - exiting\n" );
+@@ -135,8 +145,10 @@ int main( int argc, char *argv[] ) {
+ 
+   // Save off the oldCtrlBreakHander and put our own in.  Shutdown( ) will
+   // restore the original handler for us.
+-  oldCtrlBreakHandler = getvect( 0x1b );
+-  setvect( 0x1b, ctrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    oldCtrlBreakHandler = getvect( CtrlBreakVect );
++    setvect( CtrlBreakVect, ctrlBreakHandler);
++  }
+ 
+   // Get the Ctrl-C interrupt too, but do nothing.  We actually want Ctrl-C
+   // to be a legal character to send when in interactive mode.
+@@ -246,7 +258,9 @@ int main( int argc, char *argv[] ) {
+ 
+ void shutdown( int rc ) {
+ 
+-  setvect( 0x1b, oldCtrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    setvect( CtrlBreakVect, oldCtrlBreakHandler);
++  }
+ 
+   Utils::endStack( );
+ 
+diff --git a/APPS/DNSTEST/MAKEFILE b/APPS/DNSTEST/MAKEFILE
+index 8b53cf6..abf69ae 100755
+--- a/APPS/DNSTEST/MAKEFILE
++++ b/APPS/DNSTEST/MAKEFILE
+@@ -20,6 +20,7 @@
+ # -zpw  Use with above; make sure you are warning free!
+ # -0    8088/8086 class code generation
+ # -s    disable stack overflow checking
++# -zq   quiet mode
+ 
+ # For this code performance is not an issue.  Make it small.
+ 
+@@ -28,7 +29,7 @@ tcp_c_dir = ..\..\TCPLIB\
+ common_h_dir = ..\..\INCLUDE
+ 
+ memory_model = -ms
+-compile_options = -0 $(memory_model) -DCFG_H="dns.cfg"  -oh -ok -os -s -oa -zp2 -zpw -we
++compile_options = -0 $(memory_model) -DCFG_H="dns.cfg"  -oh -ok -os -s -oa -zp2 -zpw -we -zq
+ compile_options += -i=$(tcp_h_dir) -i=$(common_h_dir)
+ 
+ tcpobjs = packet.obj arp.obj eth.obj ip.obj utils.obj timer.obj ipasm.obj dns.obj udp.obj
+@@ -49,11 +50,11 @@ patch : .symbolic
+ .cpp : $(tcp_c_dir)
+ 
+ .asm.obj :
+-  wasm -0 $(memory_model) $[*
++  wasm -zq -0 $(memory_model) $[*
+ 
+ .cpp.obj :
+   wpp $[* $(compile_options)
+ 
+ 
+ dnstest.exe: $(tcpobjs) $(objs)
+-  wlink system dos option map option stack=4096 name $@ file *.obj
++  wlink system dos option quiet option map option stack=4096 name $@ file *.obj
+diff --git a/APPS/HTGET/HTGET.CFG b/APPS/HTGET/HTGET.CFG
+index fec6a66..8e5a120 100755
+--- a/APPS/HTGET/HTGET.CFG
++++ b/APPS/HTGET/HTGET.CFG
+@@ -158,4 +158,8 @@
+ #endif
+ 
+ 
++// Platform define(s)
++#define DOS_GENERIC
++
++
+ #endif
+diff --git a/APPS/HTGET/HTGET.CPP b/APPS/HTGET/HTGET.CPP
+index 71eaba6..9f1af0a 100755
+--- a/APPS/HTGET/HTGET.CPP
++++ b/APPS/HTGET/HTGET.CPP
+@@ -30,7 +30,6 @@
+ 
+ */
+ 
+-
+ #include <bios.h>
+ #include <io.h>
+ #include <fcntl.h>
+@@ -215,6 +214,8 @@ void __interrupt __far ctrlCHandler( ) {
+   // Do Nothing
+ }
+ 
++unsigned CtrlBreakVect = 0; /* 0x1b on IBMPC, 0x06 on NEC PC-98 */
++
+ 
+ 
+ 
+@@ -246,7 +247,9 @@ static void shutdown( int rc ) {
+ 
+   if ( Verbose ) fprintf(stderr, "Final return code: %d\n", rc );
+ 
+-  setvect( 0x1b, oldCtrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    setvect( CtrlBreakVect, oldCtrlBreakHandler);
++  }
+ 
+   Utils::endStack( );
+   fclose( TrcStream );
+@@ -541,9 +544,17 @@ int8_t connectSocket( void ) {
+       break;
+     }
+ 
++#if defined( DOS_GENERIC )
++    // something like delaying...
++    {
++      for(int cnt = 5; cnt > 0; --cnt)
++        dosIdleCall();
++    }
++#else
+     // Sleep for 50 ms just in case we are cutting TRACE records at
+     // a furious pace.
+     delay(50);
++#endif
+ 
+   }
+ 
+@@ -1036,7 +1047,11 @@ static void parseArgs( int argc, char *argv[] ) {
+ 
+ 
+ static char CopyrightMsg1[] = "mTCP HTGet by M Brutman (mbbrutman@gmail.com) (C)opyright 2011-2013\n";
+-static char CopyrightMsg2[] = "Version: " __DATE__ "\n\n";
++static char CopyrightMsg2[] = "Version: " __DATE__
++#if defined( DOS_GENERIC )
++                                " (DOS generic)"
++#endif
++                                "\n\n";
+ 
+ 
+ int main( int argc, char *argv[] ) {
+@@ -1092,6 +1107,10 @@ int main( int argc, char *argv[] ) {
+     exit(1);
+   }
+ 
++#if !defined( DOS_GENERIC )
++  CtrlBreakVect = 0x1b;
++#endif
++
+   if ( Utils::initStack( 1, TCP_SOCKET_RING_SIZE ) ) {
+     fprintf( stderr, "\nFailed to initialize TCP/IP - exiting\n" );
+     exit(1);
+@@ -1103,8 +1122,10 @@ int main( int argc, char *argv[] ) {
+ 
+   // Save off the oldCtrlBreakHander and put our own in.  Shutdown( ) will
+   // restore the original handler for us.
+-  oldCtrlBreakHandler = getvect( 0x1b );
+-  setvect( 0x1b, ctrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    oldCtrlBreakHandler = getvect( CtrlBreakVect );
++    setvect( CtrlBreakVect, ctrlBreakHandler);
++  }
+ 
+   // Get the Ctrl-C interrupt too, but do nothing.  We actually want Ctrl-C
+   // to be a legal character to send when in interactive mode.
+diff --git a/APPS/HTGET/MAKEFILE b/APPS/HTGET/MAKEFILE
+index 34e3f42..ab9e9cb 100755
+--- a/APPS/HTGET/MAKEFILE
++++ b/APPS/HTGET/MAKEFILE
+@@ -21,6 +21,7 @@
+ # -zpw  Use with above; make sure you are warning free!
+ # -0    8088/8086 class code generation
+ # -s    disable stack overflow checking
++# -zq   quiet mode
+ 
+ # Make it fast.  But don't use -oe otherwise you'll need large model.
+ 
+@@ -29,7 +30,7 @@ tcp_c_dir = ..\..\TCPLIB\
+ common_h_dir = ..\..\INCLUDE
+ 
+ memory_model = -ml
+-compile_options = -0 $(memory_model) -DCFG_H="htget.cfg" -oh -ok -ot -s -oa -ei -zp2 -zpw -we -ob -ol+ -oi+
++compile_options = -0 $(memory_model) -DCFG_H="htget.cfg" -oh -ok -ot -s -oa -ei -zp2 -zpw -we -ob -ol+ -oi+ -zq
+ compile_options += -i=$(tcp_h_dir) -i=$(common_h_dir)
+ 
+ 
+@@ -51,11 +52,11 @@ patch : .symbolic
+ .cpp : $(tcp_c_dir)
+ 
+ .asm.obj :
+-  wasm -0 $(memory_model) $[*
++  wasm -zq -0 $(memory_model) $[*
+ 
+ .cpp.obj :
+   wpp $[* $(compile_options)
+ 
+ 
+ htget.exe: $(tcpobjs) $(objs)
+-  wlink system dos option map option stack=4096 name $@ file *.obj
++  wlink system dos option quiet option map option stack=4096 name $@ file *.obj
+diff --git a/APPS/SNTP/MAKEFILE b/APPS/SNTP/MAKEFILE
+index 5c1d317..7dba3fd 100755
+--- a/APPS/SNTP/MAKEFILE
++++ b/APPS/SNTP/MAKEFILE
+@@ -18,6 +18,7 @@
+ # -zpw  Use with above; make sure you are warning free!
+ # -0    8088/8086 class code generation
+ # -s    disable stack overflow checking
++# -zq   quiet mode
+ 
+ # For this code performance is not an issue.  Make it small.
+ 
+@@ -26,7 +27,7 @@ tcp_c_dir = ..\..\TCPLIB\
+ common_h_dir = ..\..\INCLUDE
+ 
+ memory_model = -ms
+-compile_options = -0 $(memory_model) -DCFG_H="sntp.cfg" -oh -ok -os -s -oa -ei -zp2 -zpw -we
++compile_options = -0 $(memory_model) -DCFG_H="sntp.cfg" -oh -ok -os -s -oa -ei -zp2 -zpw -we -zq
+ compile_options += -i=$(tcp_h_dir) -i=$(common_h_dir)
+ 
+ tcpobjs = packet.obj arp.obj eth.obj ip.obj utils.obj timer.obj ipasm.obj udp.obj dns.obj
+@@ -47,10 +48,10 @@ patch : .symbolic
+ .cpp : $(tcp_c_dir)
+ 
+ .asm.obj :
+-  wasm -0 $(memory_model) $[*
++  wasm -zq -0 $(memory_model) $[*
+ 
+ .cpp.obj :
+   wpp $[* $(compile_options)
+ 
+ sntp.exe : $(tcpobjs) $(objs)
+-  wlink system dos option map option stack=4096 name $@ file *.obj
++  wlink system dos option quiet option map option stack=4096 name $@ file *.obj
+diff --git a/APPS/SNTP/SNTP.CFG b/APPS/SNTP/SNTP.CFG
+index f73cab7..1c2ec3d 100755
+--- a/APPS/SNTP/SNTP.CFG
++++ b/APPS/SNTP/SNTP.CFG
+@@ -133,4 +133,8 @@
+ #endif
+ 
+ 
++// Platform define(s)
++#define DOS_GENERIC
++
++
+ #endif
+diff --git a/APPS/SNTP/SNTP.CPP b/APPS/SNTP/SNTP.CPP
+index 69e13e3..582644b 100755
+--- a/APPS/SNTP/SNTP.CPP
++++ b/APPS/SNTP/SNTP.CPP
+@@ -90,6 +90,7 @@ void __interrupt __far ctrlBreakHandler( ) {
+ }
+ #endif
+ 
++unsigned CtrlBreakVect = 0; /* 0x1b on IBMPC, 0x06 on NEC PC-98 */
+ 
+ 
+ 
+@@ -195,7 +196,11 @@ int16_t setDosDateTime( void ) {
+ 
+ 
+ static char CopyrightMsg1[] = "mTCP SNTP Client by M Brutman (mbbrutman@gmail.com) (C)opyright 2009-2013\n";
+-static char CopyrightMsg2[] = "Version: " __DATE__ "\n\n";
++static char CopyrightMsg2[] = "Version: " __DATE__
++#if defined( DOS_GENERIC )
++                                " (DOS generic)"
++#endif
++                                "\n\n";
+ 
+ 
+ int main( int argc, char *argv[] ) {
+@@ -213,6 +218,10 @@ int main( int argc, char *argv[] ) {
+     exit( 1 );
+   }
+ 
++#if !defined( DOS_GENERIC )
++  CtrlBreakVect = 0x1b;
++#endif
++
+ 
+   char *tzStr = getenv( "TZ" );
+   if ( tzStr == NULL ) {
+@@ -245,8 +254,10 @@ int main( int argc, char *argv[] ) {
+   // same routine, but don't worry about restoring it - DOS will do that
+   // for us.
+ 
+-  oldCtrlBreakHandler = getvect( 0x1b );
+-  setvect( 0x1b, ctrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    oldCtrlBreakHandler = getvect( CtrlBreakVect );
++    setvect( CtrlBreakVect, ctrlBreakHandler);
++  }
+   setvect( 0x23, ctrlBreakHandler);
+ 
+ 
+@@ -470,7 +481,9 @@ void parseArgs( int argc, char *argv[] ) {
+ 
+ void shutdown( int rc ) {
+ 
+-  setvect( 0x1b, oldCtrlBreakHandler);
++  if ( CtrlBreakVect != 0 ) {
++    setvect( CtrlBreakVect, oldCtrlBreakHandler);
++  }
+ 
+   Utils::endStack( );
+   // Utils::dumpStats( stderr );
+diff --git a/TCPINC/TIMER.H b/TCPINC/TIMER.H
+index a77e100..aefe8b0 100755
+--- a/TCPINC/TIMER.H
++++ b/TCPINC/TIMER.H
+@@ -40,6 +40,23 @@
+ 
+ // Low resolution timer support
+ 
++#if defined ( DOS_GENERIC )
++
++# define TIMER_TICKS_PER_SEC         (100ul)
++# define TIMER_TICKS_PER_DAY    (8640000ul)
++# define TIMER_TICK_LEN             (10ul)
++
++# define TIMER_GET_CURRENT( )   ( Timer_getCurrentTicks() )
++# define TIMER_MS_TO_TICKS( a ) ( (a) / TIMER_TICK_LEN )
++
++# define Timer_diff( start, end ) ( (end) - (start) )
++
++extern clockTicks_t Timer_getCurrentTicks( void );
++
++
++
++#else
++
+ #define TIMER_TICKS_PER_SEC         (18ul)
+ #define TIMER_TICKS_PER_DAY    (1570909ul)
+ #define TIMER_TICK_LEN             (55ul)
+@@ -49,6 +66,7 @@
+ 
+ #define Timer_diff( start, end ) ( (end) - (start) )
+ 
++#endif /* DOS_GENERIC */
+ 
+ extern volatile clockTicks_t Timer_CurrentTicks;
+ 
+diff --git a/TCPINC/TYPES.H b/TCPINC/TYPES.H
+index 03ad66b..1160a64 100755
+--- a/TCPINC/TYPES.H
++++ b/TCPINC/TYPES.H
+@@ -58,6 +58,8 @@ typedef signed long   int32_t;     // 32 bit int, range -2GB to +2GB
+ 
+ #endif
+ 
++#include CFG_H
++
+ 
+ 
+ // This union lets us express a 4 byte quantity in 2 different ways:
+@@ -137,7 +139,9 @@ typedef struct dosdate_t DosDate_t;
+ #define getdate( x ) _dos_getdate( x )
+ #define getvect( x ) _dos_getvect( x )
+ #define setvect( x, y) _dos_setvect( x, y )
++#ifndef DOS_GENERIC
+ #define bioskey( x ) _bios_keybrd( x )
++#endif
+ #define findnext( x ) _dos_findnext( x )
+ #define outportb( x, y ) outp( x, y )
+ 
+diff --git a/TCPINC/UTILS.H b/TCPINC/UTILS.H
+index 8a1aa70..315b697 100755
+--- a/TCPINC/UTILS.H
++++ b/TCPINC/UTILS.H
+@@ -470,4 +470,12 @@ asm pop si;           \
+ asm pop ds;
+ 
+ 
++#ifdef DOS_GENERIC
++extern unsigned emu_bioskey( unsigned funccode );
++# ifndef COMPILE_UTILS_CPP
++#  define bioskey emu_bioskey
++# endif
++#endif
++
++
+ #endif
+diff --git a/TCPLIB/TIMER.CPP b/TCPLIB/TIMER.CPP
+index e3b199a..a55b05f 100755
+--- a/TCPLIB/TIMER.CPP
++++ b/TCPLIB/TIMER.CPP
+@@ -68,6 +68,53 @@ extern volatile clockTicks_t Timer_CurrentTicks = 0;
+ 
+ static uint8_t Timer_hooked = 0;
+ 
++#if defined ( DOS_GENERIC )
++
++static clockTicks_t Timer_PrevTicks;
++static clockTicks_t Timer_BaseTicks;
++static unsigned Timer_currentDay;
++
++uint32_t Timer_getTicksOnToday( void )
++{
++  union REGS regs;
++  regs.h.ah = 0x2c;
++  intdos(&regs, &regs);
++
++  return (((60U * regs.h.ch) + regs.h.cl) * 60UL + regs.h.dh) * 100UL + regs.h.dl;
++}
++
++
++void Timer_start( void )
++{
++  Timer_PrevTicks = Timer_getTicksOnToday();
++  Timer_BaseTicks = 0;
++}
++
++void Timer_stop( void )
++{
++}
++
++clockTicks_t Timer_getCurrentTicks( void )
++{
++  clockTicks_t t = Timer_getTicksOnToday();
++
++  if ( t < Timer_PrevTicks ) {
++    Timer_BaseTicks += TIMER_TICKS_PER_DAY;
++  }
++
++  Timer_PrevTicks = t;
++
++  return t + Timer_BaseTicks;
++}
++
++
++# if defined ( __WATCOMC__ ) || defined ( __WATCOM_CPLUSPLUS__ )
++# else
++#  error need (open)watcom compiler.
++# endif
++
++#else /* IBMPC specific */
++
+ #if defined ( __WATCOMC__ ) || defined ( __WATCOM_CPLUSPLUS__ )
+ void (__interrupt __far *Timer_old_tick_handler)( );
+ 
+@@ -100,3 +147,6 @@ void Timer_stop( void ) {
+   Timer_hooked = 0;
+   enable_ints( );
+ }
++
++/* end of IBMPC specific Timer_xxx */
++#endif
+diff --git a/TCPLIB/UTILS.CPP b/TCPLIB/UTILS.CPP
+index aa8daeb..88e41e0 100755
+--- a/TCPLIB/UTILS.CPP
++++ b/TCPLIB/UTILS.CPP
+@@ -61,6 +61,7 @@
+ #include <dos.h>
+ #include <stdarg.h>
+ 
++#define COMPILE_UTILS_CPP
+ #include "Utils.h"
+ #include "Timer.h"
+ #include "Packet.h"
+@@ -961,4 +962,32 @@ char *Utils::getNextToken( char *input, char *target, uint16_t bufLen ) {
+ 
+ 
+ 
++#if defined ( DOS_GENERIC )
++unsigned emu_bioskey( unsigned funccode )
++{
++  unsigned Result = 0;
++  union REGS regs;
++
++  switch ( funccode ) {
++    case 0: /* get */
++      regs.h.ah = 0x07;
++      intdos( &regs, &regs );
++      Result = regs.h.al;
++      if ( Result == 0 ) {
++        regs.x.ax = 0x0600;
++        regs.h.dl = 0xff;
++        intdos( &regs, &regs );
++        Result |= (unsigned)(regs.h.al) << 8;
++      }
++      break;
++    case 1: /* peek (kbhit) */
++      regs.h.ah = 0x0b;
++      intdos( &regs, &regs );
++      Result = regs.h.al;
++      break;
++  }
++
++  return Result;
++}
++#endif
+ 

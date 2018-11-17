@@ -1,0 +1,133 @@
+# Makefile for (Open)Watcom
+# wmake -h -f makemtcp.wc
+#
+# important options for watcom
+#
+# -s    disable stack check
+# -os   optimize for size
+# -zp1  pack struct/union by byte (#pragma pack(1))
+# -zp2  pack struct/union by word (default)
+# -ecc  calling conversion "cdecl" (not compatible with libcpp)
+# -ms   small model
+# -ml   large model
+#
+# useful? option
+# -zq   quiet
+# -fr   do not produce *.err file
+
+
+.ERASE
+
+!include basedef.wc
+
+CFLAGS_libmtcp = -s -os -DMTCP -DDOS_GENERIC -DCFG_H=$(MTCPCFG) -I$(MTCPINC)
+libmtcp_small=-ms
+libmtcp_large=-ml
+AFLAGS_libmtcp = -DMTCP -DDOS_GENERIC -I$(MTCPINC)
+
+COMPILE_libmtcp_s=wcl -zq -c $(libmtcp_small) $(CFLAGS_libmtcp) -fo=$@ $[@
+COMPILE_libmtcp_l=wcl -zq -c $(libmtcp_large) $(CFLAGS_libmtcp) -fo=$@ $[@
+ASSEMBLE_libmtcp_s=wasm -zq $(libmtcp_small) $(AFLAGS_libmtcp) -fo=$@ $[@
+ASSEMBLE_libmtcp_l=wasm -zq $(libmtcp_large) $(AFLAGS_libmtcp) -fo=$@ $[@
+
+WLIB_FLAGS=-q -c -n -b
+
+OBJS_libmtcp_s = mt_arps.$(O) mt_dnss.$(O) mt_eths.$(O) mt_ips.$(O) mt_ipas.$(O) mt_pkts.$(O) mt_tcps.$(O) mt_tcpss.$(O) mt_tms.$(O) mt_udps.$(O) mt_utls.$(O)
+OBJS_libmtcp_l = mt_arpl.$(O) mt_dnsl.$(O) mt_ethl.$(O) mt_ipl.$(O) mt_ipal.$(O) mt_pktl.$(O) mt_tcpl.$(O) mt_tcpsl.$(O) mt_tml.$(O) mt_udpl.$(O) mt_utll.$(O)
+
+
+sd=$(MTCPLIBSRC)$(D)
+
+SRCFILES_libmtcp = $(sd)arp.cpp $(sd)dns.cpp $(sd)eth.cpp $(sd)ip.cpp $(sd)ipasm.asm $(sd)packet.cpp $(sd)tcp.cpp $(sd)tcpsockm.cpp $(sd)timer.cpp $(sd)udp.cpp $(sd)utils.cpp
+
+
+mtcp_libs: mtcp_s.lib mtcp_l.lib .SYMBOLIC
+	-$(RM_F) mtcp_s.rsp $(OBJS_libmtcp_s)
+	-$(RM_F) mtcp_l.rsp $(OBJS_libmtcp_l)
+
+
+mtcp_s.lib: mtcp_s.rsp
+	wlib $(WLIB_FLAGS) $@ @$[@
+
+clean_mtcp_objs: .SYMBOLIC
+	-$(RM_F) $(OBJS_libmtcp_s)
+	-$(RM_F) $(OBJS_libmtcp_l)
+
+mtcp_s.rsp: $(OBJS_libmtcp_s)
+	$(RM_F) $@
+	for %i in ($(OBJS_libmtcp_s)) do echo +-%i >> $@
+
+mt_arps.$(O): $(sd)arp.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_dnss.$(O): $(sd)dns.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_eths.$(O): $(sd)eth.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_ips.$(O): $(sd)ip.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_pkts.$(O): $(sd)packet.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_tcps.$(O): $(sd)tcp.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_tcpss.$(O): $(sd)tcpsockm.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_tms.$(O): $(sd)timer.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_udps.$(O): $(sd)udp.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_utls.$(O): $(sd)utils.cpp
+	$(COMPILE_libmtcp_s)
+
+mt_ipas.$(O): $(sd)ipasm.asm
+	$(ASSEMBLE_libmtcp_s)
+
+
+mtcp_l.lib: mtcp_l.rsp
+	wlib $(WLIB_FLAGS) $@ @$[@
+
+mtcp_l.rsp: $(OBJS_libmtcp_l)
+	$(RM_F) $@
+	for %i in ($(OBJS_libmtcp_l)) do echo +-%i >> $@
+
+mt_arpl.$(O): $(sd)arp.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_dnsl.$(O): $(sd)dns.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_ethl.$(O): $(sd)eth.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_ipl.$(O): $(sd)ip.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_pktl.$(O): $(sd)packet.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_tcpl.$(O): $(sd)tcp.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_tcpsl.$(O): $(sd)tcpsockm.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_tml.$(O): $(sd)timer.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_udpl.$(O): $(sd)udp.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_utll.$(O): $(sd)utils.cpp
+	$(COMPILE_libmtcp_l)
+
+mt_ipal.$(O): $(sd)ipasm.asm
+	$(ASSEMBLE_libmtcp_l)
+

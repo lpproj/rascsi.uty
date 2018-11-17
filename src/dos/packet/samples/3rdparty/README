@@ -1,0 +1,18 @@
+mTCP-src_2013-05-23/		Michael B. Brutman's mTCP
+
+just get mTCP-src_2013-05-23.zip at http://www.brutman.com/mTCP/ (or 
+at http://www.ibiblio.org/pub/micro/pc-stuff/freedos/files/net/mtcp/), and
+unzip the archive into here.
+and apply the patch when you want to build DOS-generic binary:
+    cd mTCP-src_2013-05-23
+    patch -p1 --binary < ../mTCP_2013-05-23_DOSgeneric_20180815.diff
+
+teenlib/			Wrapper library for TEEN.
+
+TEEN (for NEC PC98 and 88VA): at http://www.pc88.gr.jp/~teen/wiki/index.php?TEEN
+(for IBMPC): at http://junk.s21.xrea.com/dosnet.html
+TEENLIB: at http://www.pc88.gr.jp/~teen/wiki/index.php?TEEN.LIB
+
+make the subdirectory "teenlib", and extract tlib037b.lzh into there.
+
+

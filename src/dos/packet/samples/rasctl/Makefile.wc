@@ -1,0 +1,81 @@
+# Makefile for (Open)Watcom
+# wmake -h -f Makefile.wc
+#
+# important options for watcom
+#
+# -zp1  pack struct/union by byte (#pragma pack(1))
+# -ecc  calling conversion "cdecl"
+# -s    disable stack check
+
+
+.ERASE
+
+!include ../common/basedef.wc
+
+SWRAP_INC=..$(D)common
+SWRAP_LIBS=$(SWRAP_INC)$(D)swrap.lib
+SWRAP_LIBS_WIN32=$(SWRAP_INC)$(D)swrapw32.lib
+
+
+CC16=wcl
+CXX16=wcl
+CFLAGS=-zq -s -DYA_GETOPT_DOS83_FILENAME
+
+
+CFLAGS_TEEN=$(CFLAGS) -os -ecc -wcd=138 -zp1 -DDOS -DTEEN $(MMODEL_TEEN_FLAGS) -I$(LIBTEENINC) -I. -I$(SWRAP_INC)
+LIBS_TEEN=$(LIBTEENDIR)$(D)lib$(D)$(LIBTEEN)
+
+ASFLAGS_MTCP=-zq $(MMODEL_MTCP) -DDOS_GENERIC
+CFLAGS_MTCP=$(CFLAGS) -os -zp2 -DDOS -DMTCP $(MMODEL_MTCP_FLAGS) -DCFG_H=$(MTCPCFG) -DDOS_GENERIC -I$(MTCPINC) -I. -I$(SWRAP_INC)
+
+CFLAGS_SWRAP_DOS16=$(CFLAGS) -os -DDOS -DMTCP -DTEEN -m$(MMODEL_DOS16) -I. -I$(SWRAP_INC)
+
+
+
+CC32=wcl386
+CXX32=wcl386
+CFLAGS_WIN32=$(CFLAGS) -I. -I$(SWRAP_INC) -DUSE_WINSOCK1
+LIBS_WIN32=wsock32.lib
+
+all: rasctl16.exe
+
+#all: rasctl16.exe rasctlm.exe rasctlt.exe rasctlw.exe
+
+clean: .SYMBOLIC
+	-$(RM_F) rasctl16.exe rasctlw.exe rasctlt.exe rasctlm.exe
+	-rm *.$(O)
+	-rm *.err
+
+rasctl16.exe: rasctl16.$(O) yageto16.$(O) $(SWRAP_LIBS)
+	$(CC16) $(CFLAGS_SWRAP_DOS16) -fe=$@ $< $(LIBS_TEEN) $(SWRAP_INC)$(D)$(LIBMTCP)
+
+rasctl16.$(O): rasctl16.c yagetopt.h
+	$(CC16) -c $(CFLAGS_SWRAP_DOS16) -fo=$@ $[@
+
+yageto16.$(O): yagetopt.c yagetopt.h
+	$(CC16) -c $(CFLAGS_SWRAP_DOS16) -fo=$@ $[@
+
+clean_libs: .SYMBOLIC
+pdir=$+ $(%cwd) $-
+	cd ..$(D)common
+	$(MAKE) -h -f makesw.wc clean
+	$(MAKE) -h -f makemtcp.wc clean
+	cd $(pdir)
+
+$(SWRAP_LIBS) $(SWRAP_LIBS_WIN32): 
+pdir=$+ $(%cwd) $-
+	cd ..$(D)common
+	$(MAKE) -h -f makemtcp.wc
+	$(MAKE) -h -f makesw.wc
+	cd $(pdir)
+
+
+rasctlw.exe: rasctlws.$(O) yagetw32.$(O) $(SWRAP_LIBS_WIN32)
+	$(CC32) $(CFLAGS_WIN32) -fe=$@ $< $(LIBS_WIN32)
+
+rasctlws.$(O): rasctl16.c yagetopt.h
+	$(CC32) -c $(CFLAGS_WIN32) -fo=$@ $[@
+
+yagetw32.$(O): yagetopt.c yagetopt.h
+	$(CC32) -c $(CFLAGS_WIN32) -fo=$@ $[@
+
