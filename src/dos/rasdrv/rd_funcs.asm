@@ -1536,7 +1536,7 @@ RD_Read:		; 2F1108
 	pop	di
 	jc	.err_cmd
 .upd_sft:
-%if 1
+%if 0
 	call	RD_h68fcb_to_sft
 %else
 	add	word [es: di + 15h], cx	; move file pointer
