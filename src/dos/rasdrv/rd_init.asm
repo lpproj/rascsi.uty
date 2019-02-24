@@ -63,7 +63,7 @@ For more information, please refer to <http://unlicense.org/>
 
 
 	INIT_DATA
-opt_i		db	0ffh
+opt_i		db	6	; 0ffh
 opt_r		db	0
 opt_h		db	0
 opt_err		db	0
