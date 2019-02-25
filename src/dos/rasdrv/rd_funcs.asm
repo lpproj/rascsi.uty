@@ -1488,6 +1488,21 @@ RD_Write:		; 2F1109
 	and	word [es: di + 5], 0bfcfh	; device info bit14=0 bit6=0 (touch mtime)
 	add	word [es: di + 15h], cx	; move file pointer
 	adc	word [es: di + 17h], 0
+	; if (cx == 0 || fileptr > filelength) filelength = fileptr
+	push	cx
+	test	cx, cx
+	mov	dx, word [es: di + 15h]
+	mov	cx, word [es: di + 17h]
+	jz	.upd_sft_filelength
+	cmp	cx, word [es: di + 13h]
+	jb	.upd_sft_filelength_exit
+	cmp	dx, word [es: di + 11h]
+	jbe	.upd_sft_filelength_exit
+.upd_sft_filelength:
+	mov	word [es: di + 11h], dx
+	mov	word [es: di + 13h], cx
+.upd_sft_filelength_exit:
+	pop	cx
 	les	bx, [bp]
 	mov	[es: bx + r_cx], cx
 	jmp	rd_success_frame_esbx
