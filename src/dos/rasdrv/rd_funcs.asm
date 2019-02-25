@@ -1489,20 +1489,17 @@ RD_Write:		; 2F1109
 	add	word [es: di + 15h], cx	; move file pointer
 	adc	word [es: di + 17h], 0
 	; if (cx == 0 || fileptr > filelength) filelength = fileptr
-	push	cx
-	test	cx, cx
-	mov	dx, word [es: di + 15h]
-	mov	cx, word [es: di + 17h]
-	jz	.upd_sft_filelength
-	cmp	cx, word [es: di + 13h]
+	jcxz	.upd_sft_filelength_exit
+	mov	ax, word [es: di + 15h]
+	mov	dx, word [es: di + 17h]
+	cmp	dx, word [es: di + 13h]
 	jb	.upd_sft_filelength_exit
-	cmp	dx, word [es: di + 11h]
+	cmp	ax, word [es: di + 11h]
 	jbe	.upd_sft_filelength_exit
 .upd_sft_filelength:
-	mov	word [es: di + 11h], dx
-	mov	word [es: di + 13h], cx
+	mov	word [es: di + 11h], ax
+	mov	word [es: di + 13h], dx
 .upd_sft_filelength_exit:
-	pop	cx
 	les	bx, [bp]
 	mov	[es: bx + r_cx], cx
 	jmp	rd_success_frame_esbx
