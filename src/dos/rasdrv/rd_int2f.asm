@@ -239,7 +239,7 @@ func2f11_table:
 	dw	RD_Write, CheckSFTesdi	; 2f1109
 	dw	0, 0 ;RD_Flock, CheckSFTesdi	; 2f110a
 	dw	0, 0 ;RD_Funlock3, CheckSFTesdi	; 2f110b
-	dw	RD_Diskinfo, CheckCDS ;CheckCDSesdi	; 2f110c
+	dw	RD_Diskinfo, CheckCDSesdi ;CheckCDS	; 2f110c
 	dw	0, 0; func2f110d, CheckFN1	; 2f110d
 	dw	RD_SetAttr, CheckFN1		; 2f110e
 	dw	RD_GetAttr, CheckFN1		; 2f110f
