@@ -425,6 +425,29 @@ PNtoNamests:
 .noerr:
 	clc
 .exit:
+%if 1
+	; change \ to / in path
+	; (workaround for flushing remote directory in RaSCSI)
+	jc	.sdirsep_break
+	lea	di, [bx + h68namests.path]
+.sdirsep_lp:
+	mov	al, [es: di]
+	test	al, al		; claer CF, and check AL==0
+	jz	.sdirsep_break
+	cmp	al, '\'
+	jne	.sdirsep_2
+	mov	byte [es: di], '/'
+.sdirsep_next:
+	inc	di
+	jmp	short .sdirsep_lp
+.sdirsep_2:
+	call	IsDBCSLead
+	jnc	.sdirsep_next
+	inc	di
+	cmp	byte [es: di], 0	; clear CF, and check overrun
+	jne	.sdirsep_next
+.sdirsep_break:
+%endif
 	pop	es
 	pop	ds
 	pop	di
