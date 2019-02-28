@@ -66,6 +66,59 @@ ToUpr:
 	ret
 
 
+; ds:si dir1 (primally)
+; es:di dir2
+;
+; result:
+; ax    0 not match
+;       1 exact match      ds:si="n:\foo\bar\baz" and es:di="n:\foo\bar\baz"
+;       2 partical match   ds:si="n:\foo\bar\baz" and es:di="n:\foo\bar"
+;                         (not match with es:di="n:\foo\ba")
+;
+compare_directory_sub:
+.lp:
+	lodsb
+	mov	ah, [es: di]
+	test	ax, ax
+	jz	.exactly
+	test	ah, ah
+	jz	.check_partical
+	test	al, al
+	jz	.not_match
+	inc	di
+	jmp	short .lp
+.exactly:
+	mov	ax, 1
+	ret
+.check_partical:
+	lodsb
+	cmp	al, '/'
+	je	.partical
+	cmp	al, '\'
+	jne	.not_match
+.partical:
+	mov	ax, 2
+	clc
+	ret
+.not_match:
+	xor	ax, ax
+	stc
+	ret
+
+CompareCDSFN1:
+	push	si
+	push	di
+	push	ds
+	push	es
+	RD_GetSDACDS	es, di
+	lds	si, [sda_fn1]
+	call	compare_directory_sub
+	pop	es
+	pop	ds
+	pop	di
+	pop	si
+	ret
+
 
 ; invalid characters for FAT on the DOS
 ;  00~1Fh all
@@ -1650,6 +1703,12 @@ RD_Delete:		; 2F1113
 
 
 RD_Rmdir:		; 2F1101
+	call	CompareCDSFN1
+	cmp	ax, 1		; cds == FN1?
+	jne	.rmdir
+	mov	ax, 16		; attempted to remove current dir
+	jmp	RD_Fallback_error_AX
+.rmdir:
 	mov	dl, RD_CMD_REMOVEDIR
 	jmp	short RD_mkrmdir
 
@@ -1685,6 +1744,12 @@ RD_mkrmdir:
 
 
 RD_Rename:		; 2F1111
+	call	CompareCDSFN1
+	cmp	ax, 1		; cds == FN1?
+	jne	.rename
+	mov	ax, 16		; (attempted to remname current dir)
+	jmp	RD_Fallback_error_AX
+.rename:
 	mov	si, rd_fs_packet
 	mov	cx, rp_rename_size
 	call	bzero_dssi
