@@ -40,6 +40,8 @@ lf	equ	10
 
 err_not_supported_dos:
 	db	'Not supported version of DOS', 0
+err_unsupported_host:
+	db	'Host device not supported', 0
 err_no_device:
 	db	'Driver is not installed', 0
 err_cant_release_device:

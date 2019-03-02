@@ -46,6 +46,7 @@ For more information, please refer to <http://unlicense.org/>
 
 
 	TSR_DATA
+scsi_host_id	db 0
 scsi_id		db 6
 scsi_lun	db 0
 
@@ -63,6 +64,10 @@ request_sense_data:
 %ifdef SCSI_55BIOS
 	%define scsi_cmd_55bios  scsi_cmd
 	%include 'scsi_55.asm'
+%endif
+%ifdef SCSI_ASPI
+	%define scsi_cmd_aspi  scsi_cmd
+	%include 'scsi_as.asm'
 %endif
 
 
@@ -352,10 +357,20 @@ CheckRaSCSI:
 
 
 InitSCSI:
+	mov	dx, err_unsupported_host
+%ifdef SCSI_ASPI
+	call	InitASPI
+	jc	.err
+%endif
+%ifdef SCSI_55BIOS
+	call	Init55BIOS
+	jc	.err
+%endif
 	cmp	al, 7
 	mov	dx, err_invalid_scsi_id
 	jae	.err
-	mov	[scsi_id], al
+	mov	[scsi_id], ax		; lun:id
+	mov	[scsi_host_id], bl
 	mov	dx, err_rasbridge_not_exist
 	call	CheckRaSCSI
 	jc	.err

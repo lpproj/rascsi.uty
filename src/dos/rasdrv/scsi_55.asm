@@ -250,6 +250,26 @@ invoke_int1b:
 
 	SCSI_CODE_END
 
+	INIT_CODE
+
+Init55BIOS:
+	push	ax
+	push	ds
+	mov	ax, 0ffffh
+	mov	ds, ax
+	cmp	word [0003h], 0fd80h		; quick check if PC-98?
+	je	.noerr
+.err:
+	stc
+	jmp	short .exit
+.noerr:
+	clc
+.exit:
+	pop	ds
+	pop	ax
+	ret
+
+	INIT_CODE_END
 
 	INIT_DATA
 msg_scsi_platform:

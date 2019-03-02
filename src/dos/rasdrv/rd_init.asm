@@ -63,6 +63,7 @@ For more information, please refer to <http://unlicense.org/>
 
 
 	INIT_DATA
+opt_a		db	0
 opt_i		db	6	; 0ffh
 opt_r		db	0
 opt_h		db	0
@@ -123,6 +124,18 @@ GetOpt:
 	mov	[opt_i], al
 	jmp	short .lp1
 .opt_5:
+	cmp	al, 'A'
+	jne	.opt_5
+	call	fetch_param
+	jc	.err
+	lodsb
+	sub	al, '0'
+	jb	.err
+	cmp	al, 7
+	jae	.err
+	mov	[opt_a], al
+	jmp	short .lp1
+.opt_6:
 .err:
 	mov	byte [opt_err], 1
 .exit:
@@ -246,6 +259,7 @@ InitCommon:
 
 	mov	al, [opt_i]
 	mov	ah, 0
+	mov	bl, [opt_a]
 	call	InitSCSI
 	jc	.err
 

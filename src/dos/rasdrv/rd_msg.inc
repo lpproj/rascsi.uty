@@ -54,6 +54,7 @@ For more information, please refer to <http://unlicense.org/>
 	PUBDECL msg_release
 
 	PUBDECL err_not_supported_dos
+	PUBDECL err_unsupported_host
 	PUBDECL err_no_device
 	PUBDECL err_cant_release_device
 	PUBDECL err_already_installed
