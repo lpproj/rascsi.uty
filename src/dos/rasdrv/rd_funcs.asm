@@ -1050,7 +1050,7 @@ RD_FindNext:		; 2F111C
 	call	RD_FS_CalCmd
 	jc	RD_Find_deverr
 	cmp	byte [rd_fs_result_be32], 80h
-	jae	.err
+	jae	.nomorefiles_or_err
 	push	si
 	lea	si, [di + h68files.full]
 	call	UpperNameDOSish
@@ -1062,7 +1062,16 @@ RD_FindNext:		; 2F111C
 	;RD_GetSDADTA	es, di
 	inc	word [es: di + 0dh]
 	jmp	rd_success_noreg
+.nomorefiles_or_err:
+	cmp	ax, RD_ERR_FILENOTFND
+	jne	.err
+	les	di, [sda_searchblock]
+	cmp	word [es: di + 0dh], 0
+	je	.err
+	mov	ax, 18			; no more files
+	jmp	RD_Fallback_error_AX
 .err:
+	
 	jmp	RD_Fallback_error
 
 
