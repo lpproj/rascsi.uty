@@ -231,8 +231,11 @@ InitCommon:
 	call	PutC
 	mov	dx, msg_build_date
 	call	PutS0n
+	cmp	byte [msg_extra_info], 0
+	je	.pext_e
 	mov	dx, msg_extra_info
 	call	PutS0n
+.pext_e:
 
 %if 1
 	mov	dx, err_cant_install_as_device

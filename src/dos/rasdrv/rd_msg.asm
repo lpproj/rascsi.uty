@@ -72,7 +72,6 @@ msg_title:
 msg_build_date:
 	db	'built at ', __DATE__, ' ', __TIME__ , 0
 msg_extra_info:
-	db	'**alpha version** '
 %ifdef DEBUG
 	db	'[DEBUG] '
 %endif
