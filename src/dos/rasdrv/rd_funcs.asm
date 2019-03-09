@@ -1661,7 +1661,7 @@ RD_SetAttr:		; 2F110E
 	mov	cx, rp_attribute_size
 	call	bzero_dssi
 	les	bx, [bp]
-	mov	al, [bx + rd_extra]
+	mov	al, [es: bx + rd_extra]
 	and	al, 3fh
 	mov	[si + rp_attribute.attr_be + 3], al
 	les	di, [sda_fn1]
