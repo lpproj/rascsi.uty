@@ -125,7 +125,7 @@ GetOpt:
 	jmp	short .lp1
 .opt_5:
 	cmp	al, 'A'
-	jne	.opt_5
+	jne	.opt_6
 	call	fetch_param
 	jc	.err
 	lodsb
