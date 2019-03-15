@@ -69,6 +69,7 @@ opt_r		db	0
 opt_h		db	0
 opt_err		db	0
 opt_d_ptr	dw	0
+opt_extra_ptr	dw	rd_fs_init_extra_param
 	INIT_DATA_END
 
 	INIT_CODE
@@ -136,6 +137,13 @@ GetOpt:
 	mov	[opt_a], al
 	jmp	short .lp1
 .opt_6:
+	cmp	al, '!'
+	jne	.opt_7
+	call	fetch_param
+	jc	.err
+	call	opt_catparam
+	jmp	short .lp1
+.opt_7:
 .err:
 	mov	byte [opt_err], 1
 .exit:
@@ -145,6 +153,29 @@ GetOpt:
 	pop	bx
 	pop	ax
 	ret
+
+opt_catparam:
+	push	di
+	push	es
+	MOVSEG	es, ds
+	mov	di, [opt_extra_ptr]
+.lp:
+	cmp	di, rd_fs_init_extra_param_bottom
+	jae	.exit
+	lodsb
+	cmp	al, 20h
+	jbe	.brk
+	stosb
+	jmp	short .lp
+.brk:
+	mov	al, 0
+	stosb
+	mov	[opt_extra_ptr], di
+.exit:
+	pop	es
+	pop	di
+	ret
+
 
 
 fetch_param:

@@ -319,6 +319,18 @@ scsi_cmdpkt_inquiry:
 	db 0			; cdb[5]
 	db 0, 0, 0, 0, 0, 0
 
+rd_fs_init_first_param:
+%ifdef SCSI_ASPI
+	db 'RASDRVAS', 0
+%else
+	db 'RASDRV55', 0
+%endif
+rd_fs_init_extra_param:
+	times 64 db 0
+rd_fs_init_extra_param_bottom:
+	db 0
+	db 0
+
 	INIT_DATA_END
 
 
@@ -375,10 +387,8 @@ InitSCSI:
 	call	CheckRaSCSI
 	jc	.err
 	;
-	mov	si, rd_buffer
+	mov	si, rd_fs_init_first_param
 	mov	cx, h68arg_size
-	xor	dx, dx
-	mov	[si], dx
 	mov	al, RD_CMD_INITDEVICE
 	call	RD_FS_SendCmd
 	mov	dx, err_rasdrv_init_failure

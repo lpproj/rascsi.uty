@@ -54,6 +54,9 @@ For more information, please refer to <http://unlicense.org/>
 	PUBDECL rd_fs_result_be32
 	PUBDECL rd_fs_result_lsb
 
+	PUBDECL rd_fs_init_extra_param
+	PUBDECL rd_fs_init_extra_param_bottom
+
 
 %ifndef REQUEST_SENSE_MAX
   %define REQUEST_SENSE_MAX  18
