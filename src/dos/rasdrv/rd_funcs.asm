@@ -1806,12 +1806,6 @@ rd_fallback_notready:
 rd_fallback_errret:
 	jmp	RD_Fallback_error
 
-rd_success_noreg:
-	les	bx, [bp]
-rd_success_frame_esbx:
-	and	byte [es: bx + r_flags], 0feh	; CF=0
-	ret
-
 
 	TSR_CODE_END
 

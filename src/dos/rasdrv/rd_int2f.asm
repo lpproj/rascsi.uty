@@ -48,7 +48,7 @@ For more information, please refer to <http://unlicense.org/>
 
 New2F:
 	pushf
-	cmp	ax, 1101h
+	cmp	ax, 1100h
 	jb	.chain_1
 	cmp	ax, 112eh
 	ja	.chain_1
@@ -104,7 +104,6 @@ New2F:
 	popf
 .chain_0:
 	jmp	far [cs: org_2f]
-	
 
 
 ;
@@ -139,6 +138,10 @@ Invoke_Int2F12xx:
 .tmp_bak_sp	dw	0
 .tmp_bak_ss	dw	0
 
+
+CheckAlways:
+	test	al, 0
+	ret
 
 CheckFN1:
 	push	ax
@@ -220,6 +223,22 @@ RD_Fallback_error_AX:
 	or	byte [es: bx + r_flags], 1	; CF=1
 	ret
 
+
+RD_CheckInst:
+	les	bx, [bp]
+	push	word [es: bx + rd_extra]	; push stack word (for detecting MSCDEX)
+	mov	ax, 1100h
+	pushf
+	call	far [org_2f]
+	pop	word [es: bx + rd_extra]
+	mov	byte [es: bx + r_al], 0ffh
+rd_success_noreg:
+	les	bx, [bp]
+rd_success_frame_esbx:
+	and	byte [es: bx + r_flags], 0feh	; CF=0
+	ret
+
+
 	TSR_CODE_END
 
 
@@ -227,7 +246,7 @@ RD_Fallback_error_AX:
 
 
 func2f11_table:
-	dw	0, 0				; 2f1100
+	dw	RD_CheckInst, CheckAlways	; 2f1100
 	dw	RD_Rmdir, CheckFN1		; 2f1101
 	dw	0, 0				; 2f1002
 	dw	RD_Mkdir, CheckFN1		; 2f1103

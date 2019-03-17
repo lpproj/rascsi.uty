@@ -62,6 +62,8 @@ For more information, please refer to <http://unlicense.org/>
 	PUBDECL InitFS
 	PUBDECL ReleaseFS
 
+	PUBDECL rd_success_noreg
+	PUBDECL rd_success_frame_esbx
 	PUBDECL RD_Fallback_error
 	PUBDECL RD_Fallback_error_AX
 	PUBDECL Invoke_Int2F12xx
