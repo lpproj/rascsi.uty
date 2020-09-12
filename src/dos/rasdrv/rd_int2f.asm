@@ -116,8 +116,6 @@ Invoke_Int2F12xx:
 	cli
 	mov	[cs: .tmp_bak_sp], sp
 	mov	[cs: .tmp_bak_ss], ss
-	cmp	byte [cs: in_private_stack], 0
-	je	.l2
 	; switch to DOS stack
 	mov	sp, [cs: org_sp]
 	mov	ss, [cs: org_ss]
