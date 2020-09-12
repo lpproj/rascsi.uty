@@ -42,6 +42,7 @@ For more information, please refer to <http://unlicense.org/>
 
 	extern opt_d_ptr
 	extern drive_number
+	extern private_stack, private_stack_bottom
 
 
 	TSR_CODE
@@ -362,9 +363,10 @@ cds_template_bottom:
 	align 2
 org_sp	dw	0
 org_ss	dw	0
-private_stack:
-	times 96 dw 0
-private_stack_bottom:
+; pricate stack: moved into rd_scsi.asm...
+;private_stack:
+;	times 96 dw 0
+;private_stack_bottom:
 
 	TSR_DATA_END
 

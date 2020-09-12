@@ -1,3 +1,9 @@
+
+%ifndef PRIVATE_STACK_LENGTH_ASPI
+%define PRIVATE_STACK_LENGTH_ASPI	320
+%endif
+PRIVATE_STACK_LENGTH	equ	PRIVATE_STACK_LENGTH_ASPI
+
 %if 0
 ;-----------------------------------------------------------------------------
 scsi_id		db 6

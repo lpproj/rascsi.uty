@@ -282,6 +282,14 @@ RD_FS_sendopt_prephase:
 
 	TSR_CODE_END
 
+	TSR_DATA
+	align	2
+	global private_stack, private_stack_bottom
+private_stack:
+	times (PRIVATE_STACK_LENGTH + 7) / 8 db ' <stack>'
+private_stack_bottom:
+
+	TSR_DATA_END
 
 	INIT_DATA
 

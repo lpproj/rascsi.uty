@@ -41,6 +41,10 @@ For more information, please refer to <http://unlicense.org/>
   %define REQUEST_SENSE_MAX  18
 %endif
 
+%ifndef PRIVATE_STACK_LENGTH_55
+%define PRIVATE_STACK_LENGTH_55		192
+%endif
+PRIVATE_STACK_LENGTH	equ	PRIVATE_STACK_LENGTH_55
 
 ;
 ;
