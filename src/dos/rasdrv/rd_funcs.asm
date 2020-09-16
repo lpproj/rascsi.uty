@@ -1438,6 +1438,7 @@ RD_Close:		; 2F1106
 	push	di
 	push	es
 	mov	di, bx
+	MOVSEG	es, ds
 	mov	cx, rp_close_size
 	mov	dx, h68fcb_size
 	mov	al, RD_CMD_CLOSE
