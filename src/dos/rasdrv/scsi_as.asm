@@ -64,7 +64,6 @@ ac_cdb:				; +64
 	times (12 + REQUEST_SENSE_MAX) db 0
 aspi_cmdpkt_bottom:
 
-
 	SCSI_DATA_END
 
 
@@ -115,7 +114,6 @@ scsi_cmd_aspi:
 .set_dir:
 	mov	[ac_flags], al
 	mov	[ac_cdblen], dh
-	mov	[ac_datalen + 2], ax
 	mov	ax, [scsi_id]		; lun:id
 	mov	[ac_id], ax
 	mov	ax, [si]		; data length
