@@ -1407,6 +1407,7 @@ RD_Open2:		; 2F112E
 	mov	dh, [bx + 2ddh]	; extended file open action code
 	mov	dl, [bx + 2dfh]	; extended file open attibutes
 	mov	cx, [bx + 2e1h]	; extended file open mode
+	and	cx, 007fh
 	pop	ds
 	call	RD_Open2_sub
 	jc	.err_ax
