@@ -153,9 +153,7 @@ scsi_cmd_aspi:
 	stc
 	jmp	short .exit
 .scsi_noerr:
-	mov	ah, 0
-.exit_noerr:
-	clc
+	xor	ax, ax		; AX=0, CF=0
 .exit:
 	mov	[cmd_result], ah
 	pop	es

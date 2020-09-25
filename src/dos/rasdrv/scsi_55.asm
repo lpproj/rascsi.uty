@@ -78,12 +78,26 @@ request_sense_data:
 ;-----------------------------------------------------------------------------
 %endif
 
-	SCSI_DATA
+
+%macro INVOKE_1B 0
+  %ifdef DEBUG
+	call	invoke_int1b
+  %else
+	int	1bh
+  %endif
+%endmacro
 
 SCSI_NO_TRANSFER_55	equ 00h
 SCSI_FROM_DEVICE_55	equ 44h
 SCSI_TO_DEVICE_55	equ 48h
 
+
+	SCSI_DATA
+
+scsi55_bioserr		db 0
+scsi55_status		db 0
+scsi55_daua		db 0
+scsi55_msgin_status	db 0
 
 scsi55_cmdpkt:
 	times 16 db 0
@@ -136,7 +150,7 @@ scsi_cmd_55bios:
 	mov	ah, byte [si + 2]
 	mov	al, SCSI_FROM_DEVICE_55
 	cmp	ah, SCSI_FROM_DEVICE
-	je .l2
+	je	.l2
 	mov	al, SCSI_TO_DEVICE_55
 	cmp	ah, SCSI_TO_DEVICE
 	je	.l2
@@ -155,14 +169,9 @@ scsi_cmd_55bios:
 	mov	bx, di
 	mov	al, [scsi_id]
 	or	al, 0c0h
-	mov	ah, 09h
-%ifdef DEBUG
-	call	invoke_int1b
-%else
-	int	1bh
-%endif
+	mov	[scsi55_daua], al
+	call	wrap_1b09
 	mov	[cmd_result], ah
-	jz	.err			; ZF=1: scsi bios in busy
 	jc	.err
 	mov	byte [cmd_result], 0
 	mov	al, [scsi55_cmdpkt]	; get SCSI status
@@ -182,17 +191,11 @@ scsi_cmd_55bios:
 	mov	bx, request_sense_data
 	MOVSEG	es, cs
 	mov	cx, REQUEST_SENSE_MAX
-	mov	al, [scsi_id]
-	or	al, 0c0h
-	mov	ah, 09h
-%ifdef DEBUG
-	call	invoke_int1b
-%else
-	int	1bh
-%endif
+	mov	al, [scsi55_daua]
+	call	wrap_1b09
 	pop	es
 .exit_noerr:
-	clc
+	xor	ax, ax		; AX=0, CF=0
 .exit:
 	pop	si
 	pop	dx
@@ -206,6 +209,80 @@ scsi_cmd_55bios:
 	jmp	short .exit
 
 
+wrap_1b09:
+	mov	ax, 0900h
+	or	al, [scsi55_daua]	; CF=0, ZF=0 (to be safe)
+	INVOKE_1B
+	mov	[scsi55_bioserr], ax
+	jz	.err_busy
+	cmp	ah, 35h
+	je	.noerr
+	cmp	ah, 0fh
+	ja	.abnormal
+.noerr:
+	clc
+	ret
+.err_busy:
+	mov	byte [scsi55_bioserr], 0ffh
+.err_exit:
+	stc
+	ret
+.abnormal:
+	cmp	ah, 12h
+	je	.err_exit
+	cmp	ah, 22h
+	je	.err_exit
+	cmp	ah, 1bh
+	je	.do_status
+	cmp	ah, 2bh
+	je	.do_status
+	cmp	ah, 1fh
+	je	.do_msgin
+	cmp	ah, 2fh
+	je	.do_msgin
+	jmp	short .do_negate
+.do_status:
+	push	bx
+	push	cx
+	push	es
+	mov	cx, 1
+	mov	bx, dx
+	MOVSEG	es, ds
+	mov	ah, 1bh
+	mov	al, [scsi55_daua]
+	INVOKE_1B
+	pop	es
+	pop	cx
+	pop	bx
+.do_msgin:
+	push	bx
+	push	cx
+	push	es
+	mov	cx, 1
+	mov	bx, scsi55_msgin_status
+	MOVSEG	es, ds
+	mov	ah, 1fh
+	mov	al, [scsi55_daua]
+	INVOKE_1B
+	pop	es
+	pop	cx
+	pop	bx
+.do_negate:
+	mov	ah, 03h
+	mov	al, [scsi55_daua]
+	INVOKE_1B
+	mov	ax, [scsi55_bioserr]
+	cmp	ah, 1bh
+	je	.ab_noerr
+	cmp	ah, 2bh
+	je	.ab_noerr
+	stc
+	ret
+.ab_noerr:
+	clc
+	ret
+
+
 %ifdef DEBUG
 
 invoke_int1b:
@@ -216,9 +293,15 @@ invoke_int1b:
 	int	1bh
 	jc	.err
 	jz	.err
+	pushf
+	test	ah, 0f0h
+	jnz	.err_f
+	popf
 .exit:
 	pop	bp
 	ret
+.err_f:
+	popf
 .err:
 	push	ax
 	push	dx
@@ -236,7 +319,19 @@ invoke_int1b:
 	call	PutC
 	mov	al, ' '
 	call	PutC
+	mov	al, 'a'
+	call	PutC
+	mov	al, 'x'
+	call	PutC
 	mov	ax, dx
+	call	PutH16
+	mov	al, ' '
+	call	PutC
+	mov	al, 'c'
+	call	PutC
+	mov	al, 'x'
+	call	PutC
+	mov	ax, cx
 	call	PutH16
 	mov	al, ' '
 	call	PutC
