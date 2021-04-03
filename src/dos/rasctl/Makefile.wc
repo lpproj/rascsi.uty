@@ -1,0 +1,55 @@
+# makefile for (Open)Watcom
+#
+# wmake -h -f makefile.wc
+
+.ERASE
+
+PROG=rasctl.exe
+
+!ifdef __UNIX__
+D=/
+O=o
+!else
+D=\
+
+O=obj
+!endif
+
+CC = wcl
+CFLAGS = -zq -s -os -fr -bt=dos -za99 -zk0
+LDFLAGS = -k4096
+LIBS = 
+RM = rm
+MKDIR = mkdir
+
+CFLAGS_55BIOS=$(CFLAGS) -DDEFAULT_55BIOS -DJAPANESE
+
+all: aspi 55bios
+
+clean: .SYMBOLIC
+	-$(RM) -fr aspi.bin
+	-$(RM) -fr 55bios.bin
+	-$(RM) *.obj *.o *.lst
+
+
+aspi: aspi.bin$(D)$(PROG) .SYMBOLIC
+
+55bios: 55bios.bin$(D)$(PROG) .SYMBOLIC
+
+aspi.bin$(D)$(PROG): rasctlas.$(O) bts_d16.$(O)
+	$(MKDIR) -p aspi.bin
+	*$(CC) -Fe=$@ $(CFLAGS) $(LDFLAGS) rasctlas.$(O) bts_d16.$(O)
+
+55bios.bin$(D)$(PROG): rasctl55.$(O) bts_d16.$(O)
+	$(MKDIR) -p 55bios.bin
+	*$(CC) -Fe=$@ $(CFLAGS) $(LDFLAGS) rasctl55.$(O) bts_d16.$(O)
+
+bts_d16.$(O): bts_d16.c bitscsi.h
+	*$(CC) -c -Fo=$@ $(CFLAGS) bts_d16.c
+
+rasctlas.$(O): rasctl.c bitscsi.h msg_en.c msg_ja.c
+	*$(CC) -c -Fo=$@ $(CFLAGS) rasctl.c
+
+rasctl55.$(O): rasctl.c bitscsi.h msg_en.c msg_ja.c
+	*$(CC) -c -Fo=$@ $(CFLAGS_55BIOS) rasctl.c
+

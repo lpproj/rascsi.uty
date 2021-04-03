@@ -1,0 +1,5 @@
+#
+RASCTLsj.txt text working-tree-encoding=CP932 eol=crlf
+msg_en.c text working-tree-encoding=CP437 eol=auto
+msg_ja.c text working-tree-encoding=CP932 eol=auto
+

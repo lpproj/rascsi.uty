@@ -1,0 +1,51 @@
+# makefile for LSI-C86 3.30c (trial)
+#
+# make -f Makefile.lsi
+
+O=obj
+D=\\
+
+#   lcc options:
+#   -j0        compiler message: english
+#   -j         compiler message: japanese
+#   -y0        charseet: shift_jis
+
+CC = lcc
+CFLAGS = -j0 -y0
+LDFLAGS = -lintlib
+LIBS = 
+
+MKDIR = mkdir
+
+PROG=rasctl.exe
+
+CFLAGS_55BIOS=$(CFLAGS) -DDEFAULT_55BIOS -DJAPANESE
+
+all: aspi 55bios
+
+clean:
+	-del aspi.bin$(D)$(PROG)
+	-del 55bios.bin$(D)$(PROG)
+	-del *.obj
+
+aspi: aspi.bin$(D)$(PROG)
+
+55bios: 55bios.bin$(D)$(PROG)
+
+aspi.bin$(D)$(PROG): rasctlas.$(O) bts_d16.$(O)
+	-$(MKDIR) aspi.bin
+	$(CC) -o $@ $(CFLAGS) rasctlas.$(O) bts_d16.$(O) $(LDFLAGS)
+
+55bios.bin$(D)$(PROG): rasctl55.$(O) bts_d16.$(O)
+	-$(MKDIR) 55bios.bin
+	$(CC) -o $@ $(CFLAGS) rasctl55.$(O) bts_d16.$(O) $(LDFLAGS)
+
+bts_d16.$(O): bts_d16.c bitscsi.h
+	$(CC) -c -o $@ $(CFLAGS) bts_d16.c
+
+rasctlas.$(O): rasctl.c bitscsi.h msg_en.c msg_ja.c
+	$(CC) -c -o $@ $(CFLAGS) rasctl.c
+
+rasctl55.$(O): rasctl.c bitscsi.h msg_en.c msg_ja.c
+	$(CC) -c -o $@ $(CFLAGS_55BIOS) rasctl.c
+
